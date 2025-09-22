@@ -123,7 +123,9 @@ func (d *PlaywrightDriver) isUpToDateDriver() (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("could not run driver: %w", err)
 	}
-	if bytes.Contains(output, []byte(d.Version)) {
+	out := string(output)
+	want := strings.TrimPrefix(d.Version, "v")
+	if strings.Contains(out, want) || strings.Contains(out, "v"+want) {
 		return true, nil
 	}
 	// avoid triggering downloads and accidentally overwriting files
