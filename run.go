@@ -18,7 +18,7 @@ import (
 
 // patchrightDriverVersion defaults to the upstream Playwright version to keep parity.
 // You can override it at runtime via environment variable PATCHRIGHT_DRIVER_VERSION.
-const playwrightCliVersion = "1.55.0"
+const playwrightCliVersion = "1.52.0"
 
 var (
 	logger               = slog.Default()
