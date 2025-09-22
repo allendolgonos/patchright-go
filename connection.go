@@ -11,8 +11,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/allendolgonos/patchright-go/internal/safe"
 	"github.com/go-stack/stack"
-	"github.com/playwright-community/playwright-go/internal/safe"
 )
 
 var (

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/playwright-community/playwright-go/internal/safe"
+	"github.com/allendolgonos/patchright-go/internal/safe"
 )
 
 type browserContextImpl struct {
