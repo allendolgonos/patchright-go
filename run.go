@@ -18,7 +18,7 @@ import (
 
 // patchrightDriverVersion defaults to the upstream Playwright version to keep parity.
 // You can override it at runtime via environment variable PATCHRIGHT_DRIVER_VERSION.
-const playwrightCliVersion = "1.52.0"
+const playwrightCliVersion = "1.55.0"
 
 var (
 	logger               = slog.Default()
@@ -156,7 +156,10 @@ func (d *PlaywrightDriver) DownloadDriver() error {
 
 	d.log("Downloading driver", "path", d.options.DriverDirectory)
 
-	body, err := downloadDriver(d.getDriverURLs())
+	urls := d.getDriverURLs()
+	d.log("Driver download URL candidates", "urls", urls)
+
+	body, err := downloadDriver(urls)
 	if err != nil {
 		return err
 	}
@@ -390,37 +393,13 @@ func (d *PlaywrightDriver) getDriverURLs() []string {
 	versionNoV := strings.TrimPrefix(version, "v")
 	asset := fmt.Sprintf("playwright-%s-%s.zip", versionNoV, platform)
 
-	// If PATCHRIGHT_DOWNLOAD_HOST is set, prefer Patchright GitHub-style layout.
-	// Expected pattern (default):
-	//   https://github.com/Kaliiiiiiiiii-Vinyzu/patchright/releases/download/v<version>/<asset>
-	// You can override host via PATCHRIGHT_DOWNLOAD_HOST to use a mirror with the same path pattern.
+	// Only use Patchright GitHub releases (or PATCHRIGHT_DOWNLOAD_HOST mirror). No upstream fallbacks.
 	if host := os.Getenv("PATCHRIGHT_DOWNLOAD_HOST"); host != "" {
 		u := fmt.Sprintf("%s/releases/download/%s/%s", strings.TrimRight(host, "/"), versionTag, asset)
 		return []string{u}
 	}
-
-	// Otherwise, if PLAYWRIGHT_DOWNLOAD_HOST is set, retain upstream-style mirror support (fallback).
-	if hostEnv := os.Getenv("PLAYWRIGHT_DOWNLOAD_HOST"); hostEnv != "" {
-		pattern := "%s/builds/driver/playwright-%s-%s.zip"
-		if !d.isReleaseVersion() {
-			pattern = "%s/builds/driver/next/playwright-%s-%s.zip"
-		}
-		return []string{fmt.Sprintf(pattern, hostEnv, versionNoV, platform)}
-	}
-
-	// Default to Patchright GitHub releases first, then fall back to upstream mirrors as a last resort.
 	patchrightURL := fmt.Sprintf("https://github.com/Kaliiiiiiiiii-Vinyzu/patchright/releases/download/%s/%s", versionTag, asset)
-	baseURLs := []string{patchrightURL}
-
-	// Upstream mirrors as fallback if Patchright asset is not found.
-	pattern := "%s/builds/driver/playwright-%s-%s.zip"
-	if !d.isReleaseVersion() {
-		pattern = "%s/builds/driver/next/playwright-%s-%s.zip"
-	}
-	for _, mirror := range playwrightCDNMirrors {
-		baseURLs = append(baseURLs, fmt.Sprintf(pattern, mirror, versionNoV, platform))
-	}
-	return baseURLs
+	return []string{patchrightURL}
 }
 
 // isReleaseVersion checks if the version is not a beta or alpha release
