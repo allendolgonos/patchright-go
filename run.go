@@ -350,7 +350,10 @@ func transformRunOptions(options ...*RunOptions) (*RunOptions, error) {
 		if err != nil {
 			return nil, fmt.Errorf("could not get default cache directory: %w", err)
 		}
-		option.DriverDirectory = filepath.Join(cacheDirectory, "ms-playwright-go", playwrightCliVersion)
+		// Use the resolved Patchright/Playwright version for the driver directory.
+		resolved := resolvePatchrightVersion()
+		resolvedNoV := strings.TrimPrefix(resolved, "v")
+		option.DriverDirectory = filepath.Join(cacheDirectory, "ms-playwright-go", resolvedNoV)
 	}
 	if option.Stdout == nil {
 		option.Stdout = os.Stdout
