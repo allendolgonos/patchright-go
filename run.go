@@ -38,36 +38,7 @@ func resolvePatchrightVersion() string {
 	if v := os.Getenv("PATCHRIGHT_DRIVER_VERSION"); v != "" {
 		return v
 	}
-	// Non-interactive HTTP call; if it fails, fall back silently.
-	req, err := http.NewRequest("GET", "https://api.github.com/repos/Kaliiiiiiiiii-Vinyzu/patchright/releases/latest", nil)
-	if err == nil {
-		req.Header.Set("Accept", "application/vnd.github+json")
-		if token := os.Getenv("GITHUB_TOKEN"); token != "" {
-			req.Header.Set("Authorization", "Bearer "+token)
-		}
-		resp, err := http.DefaultClient.Do(req)
-		if err == nil && resp != nil && resp.StatusCode == http.StatusOK {
-			defer resp.Body.Close()
-			body, _ := io.ReadAll(resp.Body)
-			// Very small parse: find "tag_name":"vX.Y.Z"
-			s := string(body)
-			// naive match
-			const key = "\"tag_name\":"
-			if idx := strings.Index(s, key); idx != -1 {
-				rest := s[idx+len(key):]
-				// rest starts with space and a quoted value
-				if q1 := strings.Index(rest, "\""); q1 != -1 {
-					rest = rest[q1+1:]
-					if q2 := strings.Index(rest, "\""); q2 != -1 {
-						tag := rest[:q2]
-						if tag != "" {
-							return tag
-						}
-					}
-				}
-			}
-		}
-	}
+	// Default to the client API version constant to ensure protocol compatibility.
 	return playwrightCliVersion
 }
 
