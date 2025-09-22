@@ -402,18 +402,24 @@ func (d *PlaywrightDriver) getDriverURLs() []string {
 		}
 	}
 
-	// Allow overriding version for Patchright driver.
+	// Resolve version. Normalize to have a single leading 'v' for the tag, and no 'v' in asset name.
 	version := d.Version
 	if v := os.Getenv("PATCHRIGHT_DRIVER_VERSION"); v != "" {
 		version = v
 	}
+	versionTag := version
+	if !strings.HasPrefix(versionTag, "v") {
+		versionTag = "v" + versionTag
+	}
+	versionNoV := strings.TrimPrefix(version, "v")
+	asset := fmt.Sprintf("playwright-%s-%s.zip", versionNoV, platform)
 
 	// If PATCHRIGHT_DOWNLOAD_HOST is set, prefer Patchright GitHub-style layout.
 	// Expected pattern (default):
-	//   https://github.com/Kaliiiiiiiiii-Vinyzu/patchright/releases/download/v<version>/patchright-<version>-<platform>.zip
+	//   https://github.com/Kaliiiiiiiiii-Vinyzu/patchright/releases/download/v<version>/<asset>
 	// You can override host via PATCHRIGHT_DOWNLOAD_HOST to use a mirror with the same path pattern.
 	if host := os.Getenv("PATCHRIGHT_DOWNLOAD_HOST"); host != "" {
-		u := fmt.Sprintf("%s/releases/download/v%s/patchright-%s-%s.zip", strings.TrimRight(host, "/"), version, version, platform)
+		u := fmt.Sprintf("%s/releases/download/%s/%s", strings.TrimRight(host, "/"), versionTag, asset)
 		return []string{u}
 	}
 
@@ -423,11 +429,11 @@ func (d *PlaywrightDriver) getDriverURLs() []string {
 		if !d.isReleaseVersion() {
 			pattern = "%s/builds/driver/next/playwright-%s-%s.zip"
 		}
-		return []string{fmt.Sprintf(pattern, hostEnv, d.Version, platform)}
+		return []string{fmt.Sprintf(pattern, hostEnv, versionNoV, platform)}
 	}
 
 	// Default to Patchright GitHub releases first, then fall back to upstream mirrors as a last resort.
-	patchrightURL := fmt.Sprintf("https://github.com/Kaliiiiiiiiii-Vinyzu/patchright/releases/download/v%s/patchright-%s-%s.zip", version, version, platform)
+	patchrightURL := fmt.Sprintf("https://github.com/Kaliiiiiiiiii-Vinyzu/patchright/releases/download/%s/%s", versionTag, asset)
 	baseURLs := []string{patchrightURL}
 
 	// Upstream mirrors as fallback if Patchright asset is not found.
@@ -436,7 +442,7 @@ func (d *PlaywrightDriver) getDriverURLs() []string {
 		pattern = "%s/builds/driver/next/playwright-%s-%s.zip"
 	}
 	for _, mirror := range playwrightCDNMirrors {
-		baseURLs = append(baseURLs, fmt.Sprintf(pattern, mirror, d.Version, platform))
+		baseURLs = append(baseURLs, fmt.Sprintf(pattern, mirror, versionNoV, platform))
 	}
 	return baseURLs
 }
