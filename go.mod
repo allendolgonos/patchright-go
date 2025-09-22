@@ -1,4 +1,4 @@
-module github.com/allendolgonos/playwright-go
+module github.com/allendolgonos/patchright-go
 
 go 1.22
 
